@@ -76,6 +76,13 @@ type Quota struct {
 	Within time.Duration
 }
 
+type ResponseFormat struct {
+	Status  bool        `json:"status"`
+	Data    interface{} `json:"data"`
+	Error   []string    `json:"error"`
+	Message string      `json:"message"`
+}
+
 func (q *Quota) KeyId() string {
 	return strconv.FormatInt(int64(q.Within)/int64(q.Limit), 10)
 }
@@ -246,11 +253,11 @@ func Policy(quota *Quota, options ...*Options) func(c *gin.Context) {
 		if controller.DeniesAccess(id) {
 			msg := newAccessMessage(o.StatusCode, o.Message)
 			setRateLimitHeaders(c.Writer, controller, id)
-			c.JSON(msg.StatusCode, gin.H{
-				"status":  false,
-				"data":    make(map[string]interface{}),
-				"error":   make([]string, 0),
-				"message": msg.Message})
+			c.JSON(msg.StatusCode, ResponseFormat{
+				Status:  false,
+				Data:    make(map[string]interface{}),
+				Error:   make([]string, 0),
+				Message: msg.Message})
 			c.Abort()
 		} else {
 			controller.RegisterAccess(id)
