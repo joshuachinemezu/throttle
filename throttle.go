@@ -246,8 +246,11 @@ func Policy(quota *Quota, options ...*Options) func(c *gin.Context) {
 		if controller.DeniesAccess(id) {
 			msg := newAccessMessage(o.StatusCode, o.Message)
 			setRateLimitHeaders(c.Writer, controller, id)
-			c.Writer.WriteHeader(msg.StatusCode)
-			c.Writer.Write([]byte(msg.Message))
+			c.JSON(msg.StatusCode, gin.H{
+				"status":  false,
+				"data":    make(map[string]interface{}),
+				"error":   make([]string, 0),
+				"message": msg.Message})
 			c.Abort()
 		} else {
 			controller.RegisterAccess(id)
